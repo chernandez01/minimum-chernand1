@@ -1,21 +1,11 @@
 #include "minemu/boot.h"
 #include "minemu/trap.h"
 #include "minemu/trace.h"
+#include "minemu/uart.h"
+#include "minemu/kprintf.h"
+#include "minemu/irq.h"
 #include <minemu/platform.h>
-
-static void uart_putc(char c) {
-    while (!(MINEMU_UART0->status & MINEMU_UART_STATUS_TX_READY)) {
-
-    }
-
-    MINEMU_UART0->tx_data = (uint32_t)c;
-}
-
-static void uart_puts(const char *s) {
-    while (*s) {
-        uart_putc(*s++);
-    }
-}
+#include <minemu/msh.h>
 
 void minemu_kernel_main(const struct minemu_boot_info *boot_info) {
     if ((uintptr_t)boot_info != MINEMU_BOOT_INFO_VADDR ||
@@ -29,7 +19,13 @@ void minemu_kernel_main(const struct minemu_boot_info *boot_info) {
         minemu_trace_event(UINT32_C(0xb007bad0));
         minemu_fail_stop();
     }
-    uart_puts("hello world\n");
+
+    uart_init();
+    minemu_irq_enable();
+    uart_init();
+    minemu_irq_enable();
     minemu_trace_event(1);
+    msh_run();
+
     minemu_fail_stop();
 }

@@ -6,14 +6,19 @@ BUILD := build
 KERNEL := $(BUILD)/minimum-kernel.elf
 RUNTIME := $(BUILD)/libminemu_kernel.a
 
-CORE_OBJECT := $(BUILD)/core/main.o
+CORE_OBJECT := $(BUILD)/core/main.o $(BUILD)/core/msh.o
+
 RUNTIME_OBJECTS := \
 	$(BUILD)/runtime/block.o \
 	$(BUILD)/runtime/exception.o \
 	$(BUILD)/runtime/memory.o \
 	$(BUILD)/runtime/trace.o \
 	$(BUILD)/startup/boot.o \
-	$(BUILD)/startup/vectors.o
+	$(BUILD)/startup/vectors.o \
+	$(BUILD)/runtime/kprintf.o \
+	$(BUILD)/runtime/uart.o \
+	$(BUILD)/runtime/irq.o \
+	$(BUILD)/startup/irq_trampoline.o
 
 OBJECTS := $(CORE_OBJECT) $(RUNTIME_OBJECTS)
 DEPENDENCIES := $(OBJECTS:.o=.d)
