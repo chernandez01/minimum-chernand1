@@ -4,8 +4,9 @@
 #include "minemu/uart.h"
 #include "minemu/kprintf.h"
 #include "minemu/irq.h"
-#include <minemu/platform.h>
-#include <minemu/msh.h>
+#include "minemu/platform.h"
+#include "minemu/msh.h"
+#include "minemu/user.h"
 
 void minemu_kernel_main(const struct minemu_boot_info *boot_info) {
     if ((uintptr_t)boot_info != MINEMU_BOOT_INFO_VADDR ||
@@ -22,10 +23,14 @@ void minemu_kernel_main(const struct minemu_boot_info *boot_info) {
 
     uart_init();
     minemu_irq_enable();
-    uart_init();
-    minemu_irq_enable();
-    minemu_trace_event(1);
+
+    /* Load the user program and drop to user mode; this does not return.
+     * (No trace event here: the devices test expects only user-issued ones.) */
+    uint32_t entry;
+    if (minemu_user_load(boot_info, "minimum-user", &entry)) {
+        minemu_enter_user(entry, MINEMU_USER_STACK_TOP);
+    }
+
     msh_run();
 
-    minemu_fail_stop();
 }
