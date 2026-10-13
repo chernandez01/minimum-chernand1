@@ -8,7 +8,6 @@ RUNTIME := $(BUILD)/libminemu_kernel.a
 
 CORE_OBJECT := \
 	$(BUILD)/core/main.o \
-	$(BUILD)/core/msh.o \
 	$(BUILD)/core/loader.o \
 	$(BUILD)/core/syscall.o \
 	$(BUILD)/startup/svc.o \
@@ -32,6 +31,10 @@ DEPENDENCIES := $(OBJECTS:.o=.d)
 ARCH_FLAGS := -mcpu=cortex-a9 -marm -mfloat-abi=soft
 CPPFLAGS := -Iinclude
 CFLAGS := $(ARCH_FLAGS) \
+	-O2 \
+	-fno-tree-loop-distribute-patterns \
+	-Wno-error=maybe-uninitialized \
+	-Wno-error=array-bounds \
 	-ffreestanding \
 	-fno-builtin \
 	-fdata-sections \

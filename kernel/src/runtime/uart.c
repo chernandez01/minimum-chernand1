@@ -64,6 +64,14 @@ static void uart0_rx_isr(void) {
     }
 }
 
+/* Drain any bytes waiting in the UART0 RX FIFO into the ring buffer without
+ * relying on the RX interrupt. Safe to call from the syscall path. */
+void uart_poll(void) {
+    uint32_t flags = irq_save();
+    uart0_rx_isr();
+    irq_restore(flags);
+}
+
 bool uart_try_getc(uint8_t *out) {
     bool got = false;
     uint32_t flags = irq_save();

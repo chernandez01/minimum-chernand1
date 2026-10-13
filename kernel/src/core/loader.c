@@ -21,9 +21,21 @@ static uint32_t user_page_vaddrs[MAX_USER_IMAGE_PAGES];
 static uint32_t user_page_flags[MAX_USER_IMAGE_PAGES];
 static size_t user_page_count;
 
+/* 32-bit accesses to byte buffers; may_alias keeps this legal under -O2. */
+typedef uint32_t __attribute__((may_alias)) word_alias_t;
+
+/* Word-at-a-time fast paths: the loader moves whole 4-KiB pages, and a
+ * byte-by-byte loop made boot too slow for the public tests' tick budgets. */
 static void zero_bytes(void *destination, size_t length) {
     uint8_t *bytes = destination;
-    for (size_t index = 0; index < length; ++index) {
+    size_t index = 0;
+    if ((((uintptr_t)bytes) & 3U) == 0) {
+        word_alias_t *words = (word_alias_t *)(void *)bytes;
+        for (; index + 4U <= length; index += 4U) {
+            *words++ = 0;
+        }
+    }
+    for (; index < length; ++index) {
         bytes[index] = 0;
     }
 }
@@ -31,7 +43,15 @@ static void zero_bytes(void *destination, size_t length) {
 static void copy_bytes(void *destination, const void *source, size_t length) {
     uint8_t *out = destination;
     const uint8_t *in = source;
-    for (size_t index = 0; index < length; ++index) {
+    size_t index = 0;
+    if (((((uintptr_t)out) | ((uintptr_t)in)) & 3U) == 0) {
+        word_alias_t *out_words = (word_alias_t *)(void *)out;
+        const word_alias_t *in_words = (const word_alias_t *)(const void *)in;
+        for (; index + 4U <= length; index += 4U) {
+            *out_words++ = *in_words++;
+        }
+    }
+    for (; index < length; ++index) {
         out[index] = in[index];
     }
 }

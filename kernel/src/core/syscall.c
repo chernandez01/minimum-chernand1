@@ -36,6 +36,7 @@ static int32_t ioctl_uart_read(uint32_t fd, uint32_t dst, uint32_t n) {
             out[count++] = (uint8_t)MINEMU_UART1->rx_data;
         }
     } else {
+        uart_poll(); /* do not depend on the RX IRQ firing in user mode */
         while (count < n && uart_try_getc(&out[count])) {
             ++count;
         }
